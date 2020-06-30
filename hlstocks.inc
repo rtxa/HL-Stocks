@@ -31,6 +31,8 @@
 * - Added hl_strip_user_weapon() (Thanks XxAvalanchexX)
 * Version 2.0 (date: 23.06.2020)
 * - Fix hl_set_user_score(), hl_set_user_frags() and hl_set_user_deaths() glitch in scoreboard when player is in spectator.
+* Version 2.1 (data: 26.06.2020)
+* - Add hl_set_user_teamnames() and hl_set_user_teamscore().
 *
 * http://aghl.ru/forum/ - Russian Half-Life and Adrenaline Gamer Community
 *
@@ -444,10 +446,11 @@ stock hl_user_spawn(client)
 	dllfunc(DLLFunc_Spawn, client);
 }
 
-// Strip a weapon from player
-// To do: add support for custom weapons (HL Weapon Mod)
+/* Strip a weapon from player
+*/
 stock hl_strip_user_weapon(id, weapon_id)
 {    
+	// to do: add support for custom weapons (HL Weapon Mod)
 	new weapon_ent = hl_user_has_weapon(id, weapon_id);
 
 	if (!weapon_ent) 
@@ -582,4 +585,42 @@ stock hl_set_user_longjump(client, bool:longjump = true, bool:tempicon = true)
 		engfunc(EngFunc_SetPhysicsKeyValue, client, "slj", "0");
 
 	set_ent_data(client, "CBasePlayer", "m_fLongJump", longjump);
+}
+
+/* Set team names in player scoreboard. Use 0 for all clients.
+*  Example: hl_set_user_teamnames(id, "Blue", "Red");
+*/
+stock hl_set_user_teamnames(id, any:...) {
+	new teamnames[HL_MAX_TEAMS][HL_TEAMNAME_LENGTH];
+	new numTeams = clamp(numargs() - 1, 0, HL_MAX_TEAMS);
+
+	for (new i; i < numTeams; i++)
+		format_args(teamnames[i], charsmax(teamnames[]), i + 1);
+
+	static MSG_TeamNames;
+
+	if (!MSG_TeamNames)
+		MSG_TeamNames = get_user_msgid("TeamNames");
+
+	message_begin(id ? MSG_ONE : MSG_ALL, MSG_TeamNames, .player = id);
+	write_byte(numTeams);
+	for (new i; i < numTeams; i++)
+		write_string(teamnames[i]);
+	message_end();
+}
+
+/* Set team score in player scoreboard. This will override the combined player scores.
+*  Use 0 for all clients.
+*/
+stock hl_set_user_teamscore(id, const teamname[], frags, deaths = 0) {
+	static MSG_TeamScore;
+
+	if (!MSG_TeamScore)
+		MSG_TeamScore = get_user_msgid("TeamScore");
+
+	message_begin(id ? MSG_ONE : MSG_ALL, MSG_TeamScore, .player = id);
+	write_string(teamname);
+	write_short(frags);
+	write_short(deaths);
+	message_end();
 }
