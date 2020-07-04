@@ -30,9 +30,12 @@
 * Version 1.9 (date: 12.05.2020)
 * - Added hl_strip_user_weapon() (Thanks XxAvalanchexX)
 * Version 2.0 (date: 23.06.2020)
-* - Fix hl_set_user_score(), hl_set_user_frags() and hl_set_user_deaths() glitch in scoreboard when player is in spectator.
-* Version 2.1 (data: 26.06.2020)
-* - Add hl_set_user_teamnames() and hl_set_user_teamscore().
+* - Fixed hl_set_user_score(), hl_set_user_frags() and hl_set_user_deaths() glitch in scoreboard when player is in spectator.
+* Version 2.1 (date: 26.06.2020)
+* - Added hl_set_user_teamnames() and hl_set_user_teamscore().
+* Version 2.2 (date: 04/07/2020)
+* - Added hl_remove_wbox().
+* - Code clean up has been done.
 *
 * http://aghl.ru/forum/ - Russian Half-Life and Adrenaline Gamer Community
 *
@@ -240,7 +243,7 @@ stock hl_get_user_team(client, team[] = "", len = 0)
 	if (tdm < 1.0) return 0;
 
 	if (!len) len = HL_MAX_TEAMNAME_LENGTH;
-	get_user_info(client, "model", team, len);
+	hl_get_user_model(client, team, len);
 
 	return __get_team_index(team);
 }
@@ -366,7 +369,8 @@ stock hl_user_has_weapon(id, weapon_id)
 	for (new i = 1; i < HL_MAX_WEAPON_SLOTS; i++)
 	{
 		ent = get_ent_data_entity(id, "CBasePlayer", "m_rgpPlayerItems", i);
-		while (ent != FM_NULLENT) {
+		while (ent != FM_NULLENT) 
+		{
 			if (hl_get_weapon_id(ent) == weapon_id)
 				return ent;
 			ent = get_ent_data_entity(ent, "CBasePlayerItem", "m_pNext");
@@ -435,6 +439,25 @@ stock hl_set_wbox_ammo(entity, ammo)
 	set_ent_data(entity, "CWeaponBox", "m_rgAmmo", ammo, 1);
 }
 
+/* Removes weapon box with proper handling of all entities inside.
+*/
+stock hl_remove_wbox(entity)
+{
+	new pWeapon;
+	
+	// destroy the weapons inside the box
+	for (new i = 0 ; i < HL_MAX_WEAPON_SLOTS; i++) {
+		pWeapon = get_ent_data_entity(pWeaponBox, "CWeaponBox", "m_rgpPlayerItems", i);
+		while (pWeapon != FM_NULLENT) {
+			set_pev(pWeapon, pev_flags, FL_KILLME);
+			pWeapon = get_ent_data_entity(pWeaponBox, "CBasePlayerItem", "m_pNext");
+		}
+	}
+	
+	// remove the box
+	set_pev(pWeaponBox, pev_flags, FL_KILLME);
+}
+
 /* Spawns a Half-Life player.
 */
 stock hl_user_spawn(client)
@@ -450,7 +473,6 @@ stock hl_user_spawn(client)
 */
 stock hl_strip_user_weapon(id, weapon_id)
 {    
-	// to do: add support for custom weapons (HL Weapon Mod)
 	new weapon_ent = hl_user_has_weapon(id, weapon_id);
 
 	if (!weapon_ent) 
@@ -550,13 +572,8 @@ stock hl_set_user_spectator(client, bool:spectator = true)
 stock bool:hl_get_user_longjump(client)
 {
 	new value[2];
-	engfunc(EngFunc_GetPhysicsKeyValue, client, "slj", value, 1);
-	switch (value[0])
-	{
-	case '1': return true;
-	}
-
-	return false;
+	engfunc(EngFunc_GetPhysicsKeyValue, client, "slj", value, charsmax(value));
+	return value[0] == '1' ? true : false;
 }
 
 /* Set longjump module to player.
@@ -611,6 +628,7 @@ stock hl_set_user_teamnames(id, any:...) {
 
 /* Set team score in player scoreboard. This will override the combined player scores.
 *  Use 0 for all clients.
+*  Warning: Team score gets switched when player changes his team. Send another message to keep this updated.
 */
 stock hl_set_user_teamscore(id, const teamname[], frags, deaths = 0) {
 	static MSG_TeamScore;
