@@ -36,7 +36,11 @@
 * Version 2.2 (date: 04/07/2020)
 * - Added hl_remove_wbox().
 * - Code clean up has been done.
-*
+* Version 2.3 (date: 06/07/2020)
+* - Improved code for processing team list. Now is more safe and works the same as the GameDLL.
+* - Fixed hl_set_user_team() not returning 0 when team is invalid.
+* - Added new constant HL_MAX_TEAMLIST_LENGTH
+* - 
 * http://aghl.ru/forum/ - Russian Half-Life and Adrenaline Gamer Community
 *
 */
@@ -55,6 +59,7 @@
 #define HL_TEAMNAME_LENGTH 		16
 #define HL_MAX_TEAMNAME_LENGTH  16
 #define HL_MAX_WEAPON_SLOTS		6
+#define HL_MAX_TEAMLIST_LENGTH  512
 
 stock static teams[HL_MAX_TEAMS][HL_MAX_TEAMNAME_LENGTH];
 
@@ -258,7 +263,7 @@ stock hl_set_user_team(client, const team[])
 
 	static teamid;
 	teamid = __get_team_index(team);
-	if (teamid == -1) return 0;
+	if (!teamid) return 0;
 
 	set_ent_data_string(client, "CBasePlayer", "m_szTeamName", team);
 	engfunc(EngFunc_SetClientKeyValue, client, engfunc(EngFunc_GetInfoKeyBuffer, client), "model", team);
@@ -295,7 +300,7 @@ stock __get_user_team(client, team[] = "", len = 0) {
 	if (tdm < 1.0) return 0;
 
 	if (!len) len = HL_MAX_TEAMNAME_LENGTH;
-	get_user_info(client, "model", team, len);
+	hl_get_user_model(client, team, len);
 
 	return __get_team_index(team);
 }
@@ -331,9 +336,8 @@ stock __count_teams()
 {
 	if (!teams[0][0])
 	{
-		new teamlist[50];
-		get_pcvar_string(get_cvar_pointer("mp_teamlist"), teamlist, charsmax(teamlist));
-		trim(teamlist);
+		new teamlist[HL_MAX_TEAMLIST_LENGTH];
+		get_cvar_string("mp_teamlist", teamlist, charsmax(teamlist));
 		__explode_teamlist(teams, charsmax(teams[]), teamlist, ';');
 	}
 
@@ -353,11 +357,25 @@ stock __count_teams()
 
 stock __explode_teamlist(output[][], size, input[], delimiter)
 {
-	new nIdx = 0, l = strlen(input);
-	new nLen = (1 + copyc(output[nIdx], size, input, delimiter));
+	new nLen, teamname[HL_MAX_TEAMLIST_LENGTH], numTeams;
+	while (nLen < strlen(input) && numTeams < HL_MAX_TEAMS)
+	{
+		strtok(input[nLen], teamname, charsmax(teamname), "", 0, delimiter);
+		nLen += strlen(teamname) + 1;
+		if (__get_team_index__(teamname, output, numTeams) < 0)
+		{
+			copy(output[numTeams], size, teamname);
+			numTeams++;
+		}
+	}
+}
 
-	while ((nLen < l) && (++nIdx < HL_MAX_TEAMS))
-		nLen += (1 + copyc(output[nIdx], size, input[nLen], delimiter));
+stock __get_team_index__(const teamname[], team_names[][], numTeams)
+{
+	for (new i = 0; i < numTeams; i++)
+		if (equali(team_names[i], teamname))
+			return i;
+	return -1;
 }
 
 /* Checks if user has that weapon (weapon id is from the HLW enum in hlsdk_const.inc)
