@@ -40,7 +40,8 @@
 * - Improved code for processing team list. Now is more safe and works the same as the GameDLL.
 * - Fixed hl_set_user_team() not returning 0 when team is invalid.
 * - Added new constant HL_MAX_TEAMLIST_LENGTH
-* - 
+* Version 2.4 (date: 08/07/2020)
+* - Fixed typos in hl_remove_wbox()
 * http://aghl.ru/forum/ - Russian Half-Life and Adrenaline Gamer Community
 *
 */
@@ -465,15 +466,15 @@ stock hl_remove_wbox(entity)
 	
 	// destroy the weapons inside the box
 	for (new i = 0 ; i < HL_MAX_WEAPON_SLOTS; i++) {
-		pWeapon = get_ent_data_entity(pWeaponBox, "CWeaponBox", "m_rgpPlayerItems", i);
+		pWeapon = get_ent_data_entity(entity, "CWeaponBox", "m_rgpPlayerItems", i);
 		while (pWeapon != FM_NULLENT) {
 			set_pev(pWeapon, pev_flags, FL_KILLME);
-			pWeapon = get_ent_data_entity(pWeaponBox, "CBasePlayerItem", "m_pNext");
+			pWeapon = get_ent_data_entity(pWeapon, "CBasePlayerItem", "m_pNext");
 		}
 	}
 	
 	// remove the box
-	set_pev(pWeaponBox, pev_flags, FL_KILLME);
+	set_pev(entity, pev_flags, FL_KILLME);
 }
 
 /* Spawns a Half-Life player.
