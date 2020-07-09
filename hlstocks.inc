@@ -64,25 +64,21 @@
 
 stock static teams[HL_MAX_TEAMS][HL_MAX_TEAMNAME_LENGTH];
 
-static const _HLW_to_rgAmmoIdx[] =
-{
-	0, 	// none
-	0,	// crowbar
-	2, 	// 9mmhandgun
-	4, 	// 357
-	2, 	// 9mmAR
-	3, 	// m203
-	7, 	// crossbow
-	1, 	// shotgun
-	6, 	// rpg
-	5, 	// gauss
-	5, 	// egon
-	12,	// hornetgun
-	10, // handgrenade
-	8, 	// tripmine
-	9, 	// satchel
-	11  // snark
-};
+enum {
+	HL_AMMO_NONE = 0,
+	HL_AMMO_BUCKSHOT,
+	HL_AMMO_9MM,
+	HL_AMMO_ARGRENADES,
+	HL_AMMO_357,
+	HL_AMMO_URANIUM,
+	HL_AMMO_ROCKETS,
+	HL_AMMO_BOLTS,
+	HL_AMMO_TRIPMINE,
+	HL_AMMO_SATCHEL,
+	HL_AMMO_HANDGRENADE,
+	HL_AMMO_SNARKS,
+	HL_AMMO_HORNETS,
+}
 
 /* Returns player frags.
 */
@@ -158,35 +154,22 @@ stock hl_set_user_score(client, frags, deaths)
 }
 
 
-/* Get amount of ammo in backpack on a user for a specific weapon.
-* Look in hlsdk_const.inc for weapon types: HLW_*.
-* Weapons on the same line uses the same ammo type:
-* shotgun
-* mp5, glock
-* argrenade
-* python
-* gauss, egon
-* rpg
-* crossbow
-* tripmine
-* satchel
-* handgrenade
-* snark
-* hornet
+/* Get amount of ammo in backpack on a user for a specific ammo type.
+* Look for ammo types: HL_AMMO_*.
 */
-stock hl_get_user_bpammo(client, weapon)
+stock hl_get_user_bpammo(client, ammoid)
 {
-	return get_ent_data(client, "CBasePlayer", "m_rgAmmo", _HLW_to_rgAmmoIdx[weapon]);
+	return get_ent_data(client, "CBasePlayer", "m_rgAmmo", ammoid);
 }
 
-/* Restock/remove ammo in a user's backpack.
+/* Set amount of ammo in a user's backpack for a specific ammo type.
 */
-stock hl_set_user_bpammo(client, weapon, ammo)
+stock hl_set_user_bpammo(client, ammoid, ammo)
 {
-	if (weapon <= HLW_CROWBAR)
+	if (ammoid <= HL_AMMO_NONE)
 		return;
 
-	set_ent_data(client, "CBasePlayer", "m_rgAmmo", ammo, _HLW_to_rgAmmoIdx[weapon]);
+	set_ent_data(client, "CBasePlayer", "m_rgAmmo", ammo, ammoid);
 }
 
 /* Get user model.
