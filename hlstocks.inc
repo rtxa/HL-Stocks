@@ -43,7 +43,8 @@
 * Version 2.4 (date: 08/07/2020)
 * - Fixed typos in hl_remove_wbox()
 * http://aghl.ru/forum/ - Russian Half-Life and Adrenaline Gamer Community
-*
+* Version 2.41 (date 09/07/2020)
+* - Remove HL_TEAMNAME_LENGTH constant.
 */
 
 #if defined _hlstocks_included
@@ -57,10 +58,9 @@
 
 // Server supports up to 32 teams, but client's scoreboard is hardcoded up to 10.
 #define HL_MAX_TEAMS			10
-#define HL_TEAMNAME_LENGTH 		16
 #define HL_MAX_TEAMNAME_LENGTH  16
-#define HL_MAX_WEAPON_SLOTS		6
 #define HL_MAX_TEAMLIST_LENGTH  512
+#define HL_MAX_WEAPON_SLOTS		6
 
 stock static teams[HL_MAX_TEAMS][HL_MAX_TEAMNAME_LENGTH];
 
@@ -627,7 +627,7 @@ stock hl_set_user_longjump(client, bool:longjump = true, bool:tempicon = true)
 *  Example: hl_set_user_teamnames(id, "Blue", "Red");
 */
 stock hl_set_user_teamnames(id, any:...) {
-	new teamnames[HL_MAX_TEAMS][HL_TEAMNAME_LENGTH];
+	new teamnames[HL_MAX_TEAMS][HL_MAX_TEAMNAME_LENGTH];
 	new numTeams = clamp(numargs() - 1, 0, HL_MAX_TEAMS);
 
 	for (new i; i < numTeams; i++)
