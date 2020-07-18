@@ -42,6 +42,9 @@
 * - Added new constant HL_MAX_TEAMLIST_LENGTH
 * Version 2.4 (date: 08/07/2020)
 * - Fixed typos in hl_remove_wbox()
+* Version 2.5 (date: 18/07/2020)
+* - Use teamid instead of teamname in hl_set_user_teamscore()
+*
 * http://aghl.ru/forum/ - Russian Half-Life and Adrenaline Gamer Community
 *
 */
@@ -649,14 +652,14 @@ stock hl_set_user_teamnames(id, any:...) {
 *  Use 0 for all clients.
 *  Warning: Team score gets switched when player changes his team. Send another message to keep this updated.
 */
-stock hl_set_user_teamscore(id, const teamname[], frags, deaths = 0) {
+stock hl_set_user_teamscore(id, teamid, frags, deaths = 0) {
 	static MSG_TeamScore;
 
 	if (!MSG_TeamScore)
 		MSG_TeamScore = get_user_msgid("TeamScore");
 
 	message_begin(id ? MSG_ONE : MSG_ALL, MSG_TeamScore, .player = id);
-	write_string(teamname);
+	write_string(teams[teamid - 1]);
 	write_short(frags);
 	write_short(deaths);
 	message_end();
